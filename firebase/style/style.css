@@ -1,0 +1,15 @@
+.login{
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(to bottom, #4a565c,  #B20000);
+}
+
+#map{
+    height: 80vh;
+    width: 48vw;
+    border: solid 1px black;
+}

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap 5-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Ícones Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Para consultar a lista de ícones, acesse: https://icons.getbootstrap.com/ -->
+    <link rel="stylesheet" href="style/style.css">
+    <link rel="icon" href="image/fatec_votorantim.png" rel="icon" type="image/png">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <!-- CSS -->
+
+
+    <!-- JS -->
+    <title>Área Reservada</title>
+</head>
+
+<body onload="verificaLogado()">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">Fatec Votorantim</a>
+            <div class="ms-auto">
+                <div id="imagemUsuario">
+                    <button class="btn btn-danger" type="button" onclick="logoutFirebase()">Logout</button>
+
+                </div>
+
+
+            </div>
+
+
+
+        </div>
+
+    </nav>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <form id="formCadastro" class="was-validated" method="post">
+                    <h4 class="text-danger">
+                        Cadastro de convênios
+                    </h4>
+                    <div class="mb-3">
+                        <label for="razao" class="form-label">Razão Social</label>
+                        <input type="text" class="form-control" id="razao" autofocus name="razao"
+                            placeholder="Razão Social" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="cep" class="form-label">CEP</label>
+                        <input type="text" class="form-control" id="cep" name="cep"
+                            title="Informe Seu CEP sem Pontos ou Traços" required maxlength="8" pattern="[0-9]{8}">
+                        <div class="invalid-feedback" id="cepFeedback">
+                            CEP INVÁLIDO! Informe somente os números
+                        </div>
+                    </div>
+
+
+
+                    <div class="mb-3">
+                        <label for="endereco" class="form-label">Endereço</label>
+                        <input type="text" class="form-control" id="endereco" name="endereco"
+                            placeholder="Endereço Completo" required>
+                    </div>
+
+
+                    <div class="mb-3 row">
+                        <div class="col-md-6">
+                            <label for="lat" class="form-label">Latitude</label>
+                            <input type="number" class="form-control" id="lat" name="lat" min="-90" max="90" step="any"
+                                required placeholder="Latitude em Graus">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="lat" class="form-label">Longitude</label>
+                            <input type="number" class="form-control" id="long" name="long" min="-180" max="180"
+                                step="any" required placeholder="Longitude em Graus">
+
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <button class="btn btn-success" id="salvar" type="submit"><i
+                                class="bi bi-save">Salvar</i></button>
+                        <button class="btn btn-danger" id="limpar" type="submit"><i class="bi bi-x">Limpar</i></button>
+
+
+                    </div>
+
+                </form>
+
+            </div>
+            <div class="col-md-6">
+                <div id="map"></div>
+
+            </div>
+
+
+        </div>
+    </div>
+
+    <!-- Carregando os scripts do Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-storage-compat.js"></script>
+    <script src="script/leaflet.js" ></script>
+    <script src="script/firebase.js"></script>
+    <script src="script/util.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+
+
+
+
+    <!-- Script do projeto -->
+    <script>
+
+        //obtendo a referência aos campos
+        const cepInput = document.getElementById('cep')
+        const endInput = document.getElementById('endereco')
+        const latInput = document.getElementById('lat')
+        const longInput = document.getElementById('long')
+        //evento de escuta do endereco
+        endInput.addEventListener('blur', function () {
+            const enderecoValue = endInput.value
+
+            getLatLong(enderecoValue, (erro, latitude, longitude) => {
+                if (erro) { alert(erro) }
+                else {
+                    latInput.value = latitude
+                    longInput.value = longitude
+                }
+            })
+        })
+
+        //adicionando o evento de escuta no cep
+        cepInput.addEventListener('blur', function () {
+            const cepValue = cepInput.value
+            const cepPattern = cepInput.getAttribute('pattern')
+            //Verifica o padrão do cep
+            if (cepValue.match(new RegExp(cepPattern))) {
+                getCEP(cepValue, (erro, logradouro) => {
+                    if (erro) {
+                        alert(erro)
+                    } else { endInput.value = logradouro }
+                })
+            } else {
+                alert('Cep inválido. Fora do padrão ' + cepPattern)
+            }
+        })
+
+
+        //evento submit do formulario
+        document.getElementById('formCadastro')
+        addEventListener('submit', function (event) {
+            event.preventDefault()
+
+
+            const estabelecimentoData = {
+                razao: document.getElementById('razao').value,
+                cep: document.getElementById('cep').value,
+                endereco: document.getElementById('endereco').value,
+                latitude: document.getElementById('lat').value,
+                longitude: document.getElementById('long').value
+            }
+            salvaEstabelecimento(estabelecimentoData)
+
+        })
+        carregaMapa()
+    </script>
+
+    
+
+
+
+
+
+
+
+
+</body>
+
+</html>

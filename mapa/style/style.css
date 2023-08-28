@@ -1,0 +1,28 @@
+body{
+    font-family: 'Montserrat', sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    height: 100vh;
+}
+
+
+#map{
+    height: 50vh; /*Viewport height*/
+    width: 80vw; /*Viewport width*/
+    border: 1px solid black;
+}
+
+.limpa-mapa{
+    background-color: darkblue;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    cursor: pointer;
+}
+
+.limpa-mapa:hover{
+    background-color: blue;
+}
